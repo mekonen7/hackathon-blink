@@ -29,10 +29,9 @@ public class ActionGesture<MainMP3> {
 
 				else if(disturbance == right) {
 					list.get(pos).pause();
-					if(disturbance == right) {
-						pos++;
-						if(pos>=list.size())
-							pos=0;
+					pos++;
+					if(pos>=list.size())
+						pos=0;
 				}
 				list.get(pos).play();
 				else if(disturbance == both) {
@@ -41,8 +40,13 @@ public class ActionGesture<MainMP3> {
 					else
 						list.get(pos).play();
 				}
+				if(list.get(pos).isComplete()) {
+					pos++;
+					if(pos>=list.size())
+						pos=0;
+					list.get(pos).play();
 				}
 			}
 		}
 	}
-}
+
