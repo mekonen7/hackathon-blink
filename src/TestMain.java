@@ -4,6 +4,7 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfRect;
@@ -13,7 +14,6 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.videoio.VideoCapture;
-
 
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
@@ -33,95 +33,6 @@ import javafx.scene.layout.VBox;
 
 public class TestMain extends Application{
 
-	//HERE BE DRAGONS
-    public void analyzeFrame1(VideoCapture capture, CascadeClassifier faceDetector, CascadeClassifier rightEyeDetector, CascadeClassifier leftEyeDetector, ImageView iView) {
-	Mat frame = new Mat(); 
-	MatOfByte buffer = new MatOfByte();
-	MatOfRect faceDetections = new MatOfRect();
-	MatOfRect rightEyeDetections = new MatOfRect();
-	MatOfRect leftEyeDetections = new MatOfRect();
-	MatOfRect eyeDetections = new MatOfRect();
-
-	capture.read(frame);
-
-	Imgproc.cvtColor(frame, frame, Imgproc.COLOR_BGR2GRAY);
-	Imgproc.equalizeHist(frame, frame);
-	Imgproc.threshold(frame, frame, 90, 255, Imgproc.THRESH_BINARY);
-
-	faceDetector.detectMultiScale(frame, faceDetections, 1.1, 5, 0, new Size(30,30), new Size());
-	rightEyeDetector.detectMultiScale(frame, rightEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
-	leftEyeDetector.detectMultiScale(frame, leftEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
-
-	Rect[] faces = faceDetections.toArray();
-	Rect[] rEyes = rightEyeDetections.toArray();
-	Rect[] lEyes = leftEyeDetections.toArray();
-
-	Rect face;
-
-	if(faces.length > 0) {
-	    face = faces[0];
-	} else {
-	    Imgcodecs.imencode(".png", frame, buffer);
-
-	    Image img = new Image(new ByteArrayInputStream(buffer.toArray()));
-	    iView.setImage(img);
-	    return;
-	}
-
-
-	Imgproc.rectangle(frame, face.tl(), face.br(), new Scalar(0,0,255,255), 2);
-
-
-	double minX = 2000;
-	int rInd = -1;
-
-	double maxX = 0;
-	int lInd = -1;
-
-	for (int i = 0; i < rEyes.length; i++) {
-
-	    Rect rect = rEyes[i];
-	    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
-
-	    if(rect.tl().x < minX) {
-		minX = rect.tl().x;
-		rInd = i;
-	    }
-	}
-
-	for (int i = 0; i < lEyes.length; i++) {
-	    Rect rect = lEyes[i];
-	    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
-
-	    if(rect.br().x > maxX) {
-		maxX = rect.br().x;
-		lInd = i;
-	    }
-	}
-
-	if(rInd != -1) 
-	    Imgproc.rectangle(frame, rEyes[rInd].tl(), rEyes[rInd].br(), new Scalar(0,255,0,255), 2);
-
-	if(lInd !=-1)
-	    Imgproc.rectangle(frame, lEyes[lInd].tl(), lEyes[lInd].br(), new Scalar(0,255,0,255), 2);
-	
-	Imgcodecs.imencode(".png", frame, buffer);
-
-	Image img = new Image(new ByteArrayInputStream(buffer.toArray()));
-	iView.setImage(img);
-	
-//	if(rInd == -1 || lInd == -1) return;
-//
-//	Rect rightEye = rEyes[rInd];
-//	Rect leftEye = lEyes[lInd];
-//
-//
-//	Mat roi1 = new Mat(frame, rightEye);
-//	Mat roi2 = new Mat(frame, leftEye);
-//
-//	Imgproc.threshold(roi1, roi1, 120, 255, Imgproc.THRESH_BINARY);
-	
-    }
 
 
 
@@ -130,6 +41,13 @@ public class TestMain extends Application{
     public void start(Stage stage) throws Exception {
 
 	VideoCapture capture = new VideoCapture(0);
+
+	Mat frame = new Mat();
+	MatOfByte buffer = new MatOfByte();
+	MatOfRect faceDetections = new MatOfRect();
+	MatOfRect rightEyeDetections = new MatOfRect();
+	MatOfRect leftEyeDetections = new MatOfRect();
+	MatOfRect eyeDetections = new MatOfRect();
 
 	CascadeClassifier faceDetector = new CascadeClassifier("resources/haarcascade_frontalface_alt.xml");
 	CascadeClassifier rightEyeDetector = new CascadeClassifier("resources/haarcascade_righteye_2splits.xml");
@@ -144,13 +62,117 @@ public class TestMain extends Application{
 	Timer timer = new Timer();
 	timer.scheduleAtFixedRate(new TimerTask() {
 
+
+
 	    @Override
 	    public void run() {
-		analyzeFrame1(capture, faceDetector, rightEyeDetector, leftEyeDetector, iView);
+		capture.read(frame);
+
+		Imgproc.cvtColor(frame, frame, Imgproc.COLOR_BGR2GRAY);
+		Imgproc.equalizeHist(frame, frame);
+		//Imgproc.threshold(frame, frame, 90, 255, Imgproc.THRESH_BINARY);
+
+		faceDetector.detectMultiScale(frame, faceDetections, 1.1, 5, 0, new Size(30,30), new Size());
+		rightEyeDetector.detectMultiScale(frame, rightEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
+		leftEyeDetector.detectMultiScale(frame, leftEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
+
+		Rect[] faces = faceDetections.toArray();
+		Rect[] rEyes = rightEyeDetections.toArray();
+		Rect[] lEyes = leftEyeDetections.toArray();
+
+		Rect face;
+
+		if(faces.length > 0) {
+		    face = faces[0];
+		} else {
+		    face = new Rect(0,0,2000,2000);
+		}
+
+
+		Imgproc.rectangle(frame, face.tl(), face.br(), new Scalar(0,0,255,255), 2);
+
+
+		double minX = 2000;
+		int rInd = -1;
+
+		double maxX = 0;
+		int lInd = -1;
+
+		for (int i = 0; i < rEyes.length; i++) {
+
+		    Rect rect = rEyes[i];
+		    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
+
+		    if(rect.tl().x < minX) {
+			minX = rect.tl().x;
+			rInd = i;
+		    }
+
+		    
+		}
+
+		for (int i = 0; i < lEyes.length; i++) {
+		    Rect rect = lEyes[i];
+		    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
+
+		    if(rect.br().x > maxX) {
+			maxX = rect.br().x;
+			lInd = i;
+		    }
+
+		    
+		}
+
+		if(rInd != -1) 
+		    Imgproc.rectangle(frame, rEyes[rInd].tl(), rEyes[rInd].br(), new Scalar(0,255,0,255), 2);
+
+		if(lInd !=-1)
+		    Imgproc.rectangle(frame, lEyes[lInd].tl(), lEyes[lInd].br(), new Scalar(0,255,0,255), 2);
+
+		Imgcodecs.imencode(".png", frame, buffer);
+
+		Image img = new Image(new ByteArrayInputStream(buffer.toArray()));
+		iView.setImage(img);
+
+		//		if(rInd == -1 || lInd == -1) return;
+		//
+		//		Rect rightEye = rEyes[rInd];
+		//		Rect leftEye = lEyes[lInd];
+		//
+		//
+		//		Mat roi1 = new Mat(mainFrame, rightEye);
+		//		Mat roi2 = new Mat(mainFrame, leftEye);
+		//
+		//		Imgproc.threshold(roi1, roi1, 120, 255, Imgproc.THRESH_BINARY);
+		//		Imgproc.threshold(roi2, roi2, 120, 255, Imgproc.THRESH_BINARY);
+		//	
+		//		roi1.convertTo(roi1, CvType.CV_64FC3);
+		//		roi2.convertTo(roi2, CvType.CV_64FC3);
+		//	
+		//		int size1 = (int) (roi1.total() * roi1.channels());
+		//		double[] rArr = new double[size1]; 
+		//		roi1.get(0,0,rArr);	
+		//			
+		//		int totalIntensityR = 0;
+		//	
+		//		//for(int y = 0; y < roi1.height(); y++){
+		//		    for(int x=0; x < size1; x++) {
+		//			System.out.println(rArr[x]);
+		//		    }
+		//		//}
+		//
+		//		int whiteR = Core.countNonZero(roi1);
+		//		int whiteL = Core.countNonZero(roi2);
+
+		//		if(whiteR / (rightEye.width * rightEye.height) > 0.5) {
+		//		    System.out.println("Open");
+		//		} else {
+		//		    System.out.println("Closed");
+		//		}
 
 	    }
 
-	}, 0, 60);
+	}, 0, 33);
 
 
 
