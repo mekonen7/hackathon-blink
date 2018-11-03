@@ -1,0 +1,138 @@
+//import java.io.FileInputStream;
+//import java.io.FileNotFoundException;
+//import java.io.InputStream;
+//
+//import javazoom.jl.decoder.JavaLayerException;
+//import javazoom.jl.player.Player;
+//import javazoom.jl.player.advanced.AdvancedPlayer;
+//import javazoom.jl.player.advanced.PlaybackEvent;
+//import javazoom.jl.player.advanced.PlaybackListener;
+//public class MainMP3 {
+//	Thread t;
+//	
+//	public static void main(String[] args)
+//	t=new Thread();
+//
+//	
+//		
+//		
+//
+//	
+//	public void run() {
+//		// TODO Auto-generated method stub
+//		try{
+//			FileInputStream fileInputStream = new FileInputStream("Mfg.mp3");
+//			
+//
+////			InputStream fis = null;
+//			AdvancedPlayer player = new AdvancedPlayer(fileInputStream);
+//			player.play();
+//			//t= new Thread(player);
+////			player.setPlayBackListener(new PlaybackListener() {
+////			    public void playbackFinished(PlaybackEvent event) {
+//////			    	int pausedOnFrame = 0;
+//////			        pausedOnFrame = event.getFrame();     
+////			    }
+////			});
+//			
+////			for(int i=0; i< 6000; i+=500) {	
+////			player.play(i,i+500);
+//////			if(i==600)
+//////				player.stop();
+//	//	
+////			}
+//			//System.out.println("break");
+////			player.stop();
+////			for(int i=0; i<10; i++)
+////			{
+////			 i=i;
+////			}
+//			//player.close();
+////			if(get.isComplete())
+////				System.out.println("Song has Stopped");
+//			}
+//			catch (FileNotFoundException e) {
+//				e.printStackTrace();
+//			}catch(JavaLayerException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//	}
+//
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.advanced.AdvancedPlayer;
+
+public class MainMP3 extends JFrame implements ActionListener, Runnable{
+	static MainMP3 p;
+	Thread t;
+	
+	JButton play, pause, stop, resume;
+	public MainMP3(){
+		play = new JButton("play");
+		pause = new JButton("pause");
+		stop = new JButton("stop");
+		resume = new JButton("resume");
+		
+		play.setBounds(100, 100, 100, 30);
+		pause.setBounds(100, 200, 100, 30);
+		stop.setBounds(100, 300, 100, 30);
+		resume.setBounds(100, 400, 100, 30);
+		
+		play.addActionListener(this);
+		pause.addActionListener(this);
+		stop.addActionListener(this);
+		resume.addActionListener(this);
+		
+		add(play);
+		add(pause);
+		add(stop);
+		add(resume);
+		
+		setLayout(null);
+		setSize(500,500);
+		setVisible(true);
+	}
+	
+	public static void main(String args[]) throws JavaLayerException{
+		p = new MainMP3();
+		
+	}
+	
+	//@Override
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource()==play) {
+			t = new Thread(p);
+			t.start();
+		}
+		else if(e.getSource()==pause)
+			t.suspend();
+		else if(e.getSource()==stop)
+			t.stop();
+		else if(e.getSource()==resume)
+			t.resume();
+		}
+	
+	@Override
+	public void run(){
+		FileInputStream fis;
+		try {
+			fis = new FileInputStream("Mfg.mp3");
+			AdvancedPlayer player = new AdvancedPlayer(fis);
+			player.play();
+		}
+		catch(FileNotFoundException e) {
+			System.out.println("Not found");
+		}
+		
+		catch(JavaLayerException e) {
+			System.out.println("JL Exception");
+		}
+	}
+}
