@@ -55,7 +55,7 @@ public class TestMain extends Application{
 	ImageView iView = new ImageView();
 	//iView.setImage();
 
-	
+
 	Timer timer = new Timer();
 	timer.scheduleAtFixedRate(new TimerTask() {
 
@@ -65,30 +65,58 @@ public class TestMain extends Application{
 
 		Imgproc.cvtColor(frame, frame, Imgproc.COLOR_BGR2GRAY);
 		Imgproc.equalizeHist(frame, frame);
-		
+
 		faceDetector.detectMultiScale(frame, faceDetections, 1.1, 5, 0, new Size(30,30), new Size());
-		rightEyeDetector.detectMultiScale(frame, eyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
-		
-		
+		rightEyeDetector.detectMultiScale(frame, rightEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
+		leftEyeDetector.detectMultiScale(frame, leftEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
+
 		Rect[] faces = faceDetections.toArray();
-		Rect face;
+		Rect[] rEyes = rightEyeDetections.toArray();
+		Rect[] lEyes = leftEyeDetections.toArray();
 		
+		Rect face;
+
 		if(faces.length > 0)
 		    face = faces[0];
 		else
 		    face = new Rect(0,0,2000,2000);
-		
+
 		Imgproc.rectangle(frame, face.tl(), face.br(), new Scalar(0,0,255,255), 2);
+
 		
-		for (Rect rect : eyeDetections.toArray()) {
-		    
+		double minX = 2000;
+		int rightEye = -1;
+		
+		double maxX = 0;
+		int leftEye = -1;
+		
+		for (int i = 0; i < rEyes.length; i++) {
+
+		    Rect rect = rEyes[i];
+		    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
+
+		    if(rect.tl().x < minX) {
+			minX = rect.tl().x;
+			rightEye = i;
+		    }
+		}
+		
+		for (int i = 0; i < lEyes.length; i++) {
+		    Rect rect = lEyes[i];
 		    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
 		    
-		    System.out.println(rect.tl().x);
-		    Imgproc.rectangle(frame, rect.tl(), rect.br(), new Scalar(0,255,0,255), 2);
-                 }
+		    if(rect.br().x > maxX) {
+			maxX = rect.br().x;
+			leftEye = i;
+		    }
+		}
 		
-		System.out.println("***");
+		if(rightEye != -1) 
+		    Imgproc.rectangle(frame, rEyes[rightEye].tl(), rEyes[rightEye].br(), new Scalar(0,255,0,255), 2);
+		
+		if(leftEye !=-1)
+		    Imgproc.rectangle(frame, lEyes[leftEye].tl(), lEyes[leftEye].br(), new Scalar(0,255,0,255), 2);
+		
 		
 		Imgcodecs.imencode(".png", frame, buffer);
 
@@ -97,23 +125,23 @@ public class TestMain extends Application{
 
 	    }
 
-	}, 0, 33);
+	}, 0, 60);
 
 
 
-//	Button btn = new Button();
-//	btn.setText("Text");
-//
-//
-//	btn.setOnAction(new EventHandler<ActionEvent>() {
-//
-//	    @Override
-//	    public void handle(ActionEvent event) {
-//
-//
-//		System.out.println("result");
-//	    }
-//	});
+	//	Button btn = new Button();
+	//	btn.setText("Text");
+	//
+	//
+	//	btn.setOnAction(new EventHandler<ActionEvent>() {
+	//
+	//	    @Override
+	//	    public void handle(ActionEvent event) {
+	//
+	//
+	//		System.out.println("result");
+	//	    }
+	//	});
 
 	VBox box = new VBox();
 	box.getChildren().add(iView);
