@@ -33,6 +33,98 @@ import javafx.scene.layout.VBox;
 
 public class TestMain extends Application{
 
+	//HERE BE DRAGONS
+    public void analyzeFrame1(VideoCapture capture, CascadeClassifier faceDetector, CascadeClassifier rightEyeDetector, CascadeClassifier leftEyeDetector, ImageView iView) {
+	Mat frame = new Mat(); 
+	MatOfByte buffer = new MatOfByte();
+	MatOfRect faceDetections = new MatOfRect();
+	MatOfRect rightEyeDetections = new MatOfRect();
+	MatOfRect leftEyeDetections = new MatOfRect();
+	MatOfRect eyeDetections = new MatOfRect();
+
+	capture.read(frame);
+
+	Imgproc.cvtColor(frame, frame, Imgproc.COLOR_BGR2GRAY);
+	Imgproc.equalizeHist(frame, frame);
+	Imgproc.threshold(frame, frame, 90, 255, Imgproc.THRESH_BINARY);
+
+	faceDetector.detectMultiScale(frame, faceDetections, 1.1, 5, 0, new Size(30,30), new Size());
+	rightEyeDetector.detectMultiScale(frame, rightEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
+	leftEyeDetector.detectMultiScale(frame, leftEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
+
+	Rect[] faces = faceDetections.toArray();
+	Rect[] rEyes = rightEyeDetections.toArray();
+	Rect[] lEyes = leftEyeDetections.toArray();
+
+	Rect face;
+
+	if(faces.length > 0) {
+	    face = faces[0];
+	} else {
+	    Imgcodecs.imencode(".png", frame, buffer);
+
+	    Image img = new Image(new ByteArrayInputStream(buffer.toArray()));
+	    iView.setImage(img);
+	    return;
+	}
+
+
+	Imgproc.rectangle(frame, face.tl(), face.br(), new Scalar(0,0,255,255), 2);
+
+
+	double minX = 2000;
+	int rInd = -1;
+
+	double maxX = 0;
+	int lInd = -1;
+
+	for (int i = 0; i < rEyes.length; i++) {
+
+	    Rect rect = rEyes[i];
+	    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
+
+	    if(rect.tl().x < minX) {
+		minX = rect.tl().x;
+		rInd = i;
+	    }
+	}
+
+	for (int i = 0; i < lEyes.length; i++) {
+	    Rect rect = lEyes[i];
+	    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
+
+	    if(rect.br().x > maxX) {
+		maxX = rect.br().x;
+		lInd = i;
+	    }
+	}
+
+	if(rInd != -1) 
+	    Imgproc.rectangle(frame, rEyes[rInd].tl(), rEyes[rInd].br(), new Scalar(0,255,0,255), 2);
+
+	if(lInd !=-1)
+	    Imgproc.rectangle(frame, lEyes[lInd].tl(), lEyes[lInd].br(), new Scalar(0,255,0,255), 2);
+	
+	Imgcodecs.imencode(".png", frame, buffer);
+
+	Image img = new Image(new ByteArrayInputStream(buffer.toArray()));
+	iView.setImage(img);
+	
+//	if(rInd == -1 || lInd == -1) return;
+//
+//	Rect rightEye = rEyes[rInd];
+//	Rect leftEye = lEyes[lInd];
+//
+//
+//	Mat roi1 = new Mat(frame, rightEye);
+//	Mat roi2 = new Mat(frame, leftEye);
+//
+//	Imgproc.threshold(roi1, roi1, 120, 255, Imgproc.THRESH_BINARY);
+	
+    }
+
+
+
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -45,13 +137,6 @@ public class TestMain extends Application{
 	CascadeClassifier eyeDetector = new CascadeClassifier("resources/haarcascade_eye.xml");
 
 
-	Mat frame = new Mat(); 
-	MatOfByte buffer = new MatOfByte();
-	MatOfRect faceDetections = new MatOfRect();
-	MatOfRect rightEyeDetections = new MatOfRect();
-	MatOfRect leftEyeDetections = new MatOfRect();
-	MatOfRect eyeDetections = new MatOfRect();
-
 	ImageView iView = new ImageView();
 	//iView.setImage();
 
@@ -61,67 +146,7 @@ public class TestMain extends Application{
 
 	    @Override
 	    public void run() {
-		capture.read(frame);
-
-		Imgproc.cvtColor(frame, frame, Imgproc.COLOR_BGR2GRAY);
-		Imgproc.equalizeHist(frame, frame);
-
-		faceDetector.detectMultiScale(frame, faceDetections, 1.1, 5, 0, new Size(30,30), new Size());
-		rightEyeDetector.detectMultiScale(frame, rightEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
-		leftEyeDetector.detectMultiScale(frame, leftEyeDetections, 1.1, 5, 0, new Size(30,30), new Size());
-
-		Rect[] faces = faceDetections.toArray();
-		Rect[] rEyes = rightEyeDetections.toArray();
-		Rect[] lEyes = leftEyeDetections.toArray();
-		
-		Rect face;
-
-		if(faces.length > 0)
-		    face = faces[0];
-		else
-		    face = new Rect(0,0,2000,2000);
-
-		Imgproc.rectangle(frame, face.tl(), face.br(), new Scalar(0,0,255,255), 2);
-
-		
-		double minX = 2000;
-		int rightEye = -1;
-		
-		double maxX = 0;
-		int leftEye = -1;
-		
-		for (int i = 0; i < rEyes.length; i++) {
-
-		    Rect rect = rEyes[i];
-		    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
-
-		    if(rect.tl().x < minX) {
-			minX = rect.tl().x;
-			rightEye = i;
-		    }
-		}
-		
-		for (int i = 0; i < lEyes.length; i++) {
-		    Rect rect = lEyes[i];
-		    if(!face.contains(rect.tl()) || !face.contains(rect.br())) continue;
-		    
-		    if(rect.br().x > maxX) {
-			maxX = rect.br().x;
-			leftEye = i;
-		    }
-		}
-		
-		if(rightEye != -1) 
-		    Imgproc.rectangle(frame, rEyes[rightEye].tl(), rEyes[rightEye].br(), new Scalar(0,255,0,255), 2);
-		
-		if(leftEye !=-1)
-		    Imgproc.rectangle(frame, lEyes[leftEye].tl(), lEyes[leftEye].br(), new Scalar(0,255,0,255), 2);
-		
-		
-		Imgcodecs.imencode(".png", frame, buffer);
-
-		Image img = new Image(new ByteArrayInputStream(buffer.toArray()));
-		iView.setImage(img);
+		analyzeFrame1(capture, faceDetector, rightEyeDetector, leftEyeDetector, iView);
 
 	    }
 
